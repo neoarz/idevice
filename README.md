@@ -22,6 +22,7 @@ but the API and feature-set are far from final or even planned.
 To keep dependency bloat and compile time down, everything is contained in features.
 
 - afc - Apple File Conduit, partial/in-progress support
+- amfi - Apple Mobile File Integrity service
 - core_device_proxy - Start a secure tunnel to access protected services
 - debug_proxy - Send GDB commands
 - dvt - Developer tools/instruments
@@ -31,6 +32,7 @@ To keep dependency bloat and compile time down, everything is contained in featu
 - misagent - Manage provisioning profiles
 - mobile_image_mounter - Manage the DDI mounted on the device
 - location_simulation - Simulate the GPS location
+- pair - Generate pairing files for device authentication
 - tcp - Connect to devices over TCP
 - tunnel_tcp_stack - Naive software TCP stack for core_device_proxy
 - tss - Requests to Apple's TSS servers, partial support
@@ -48,7 +50,6 @@ Finish the following:
 
 Implement the following:
 
-- amfi
 - companion_proxy
 - crash_reports
 - diagnostics
