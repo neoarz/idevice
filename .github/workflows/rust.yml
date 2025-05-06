@@ -16,9 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
       - name: Build with all features
         run: cargo build --workspace --all-features
       - name: Check each feature individually
