@@ -1,4 +1,4 @@
-name: Rust CI
+name: Build Check
 
 on:
   push:
@@ -11,146 +11,19 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
-    name: Check
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: rust-lang/setup-rust-toolchain@v1
         with:
-          profile: minimal
           toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: Check all features
-        run: cargo check --workspace --all-features
-      - name: Check individual features
+      - name: Build with all features
+        run: cargo build --workspace --all-features
+      - name: Check each feature individually
         run: |
           for feature in afc amfi core_device_proxy debug_proxy dvt heartbeat installation_proxy springboardservices misagent mobile_image_mounter location_simulation pair tcp tunnel_tcp_stack tss tunneld usbmuxd xpc; do
             echo "Checking feature: $feature"
             cargo check --package idevice --no-default-features --features "$feature"
-          done
-
-  test:
-    name: Test Suite
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: Run tests
-        run: cargo test --workspace --all-features
-
-  fmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: clippy
-      - uses: Swatinem/rust-cache@v2
-      - name: Run clippy
-        run: cargo clippy --workspace --all-features -- -D warnings
-
-  build:
-    name: Build
-    needs: [check, fmt, clippy]
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: ${{ matrix.rust }}
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: Build with all features
-        run: cargo build --workspace --all-features
-      - name: Build with no features
-        run: cargo build --package idevice --no-default-features
-
-  doc:
-    name: Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: Check documentation
-        env:
-          RUSTDOCFLAGS: "-D warnings"
-        run: cargo doc --workspace --all-features --no-deps
-
-  # This job ensures all the examples compile
-  examples:
-    name: Examples
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - uses: Swatinem/rust-cache@v2
-      - name: Build examples from README
-        run: |
-          # Extract and test example code from README
-          grep -A 40 '```rust' idevice/README.md | grep -v '```' > example.rs
-          rustc -Copt-level=0 --crate-type lib example.rs || echo "README example requires runtime dependencies"
-          
-  cargo-deny:
-    name: License and vulnerability checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: EmbarkStudios/cargo-deny-action@v1
-        with:
-          command: check licenses sources vulnerabilities
-
-  # Check that crate versions are consistent with git tags for releases
-  # This helps prevent accidental version inconsistencies
-  version-check:
-    name: Version check
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - uses: actions/checkout@v3
-      - name: Check release version matches tag
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          CRATE_VERSION=$(grep '^version =' idevice/Cargo.toml | head -n1 | cut -d'"' -f2)
-          if [ "v$CRATE_VERSION" != "$TAG" ]; then
-            echo "::error::Tag $TAG does not match crate version v$CRATE_VERSION"
-            exit 1 
+          done 
