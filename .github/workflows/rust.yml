@@ -21,14 +21,19 @@ jobs:
       - name: Build core library
         working-directory: ./idevice
         run: |
-          # Add time 
-          sed -i 's/tokio = { version = "1.43", features = \["io-util"\] }/tokio = { version = "1.43", features = \["io-util", "time"\] }/g' Cargo.toml
-          # Build with time feature enabled
-          cargo build --features "time"
-      - name: Check each feature individually
+          # Build with heartbeat feature that includes tokio/time
+          cargo build --features "heartbeat"
+      - name: Check other features
         working-directory: ./idevice
         run: |
-          for feature in afc amfi core_device_proxy debug_proxy dvt heartbeat installation_proxy springboardservices misagent mobile_image_mounter location_simulation pair tcp tunnel_tcp_stack tss tunneld usbmuxd xpc; do
+          # First check features that may depend on tokio time
+          for feature in heartbeat tcp tunnel_tcp_stack xpc; do
             echo "Checking feature: $feature"
-            cargo check --no-default-features --features "$feature,time"
+            cargo check --no-default-features --features "$feature"
+          done
+          
+          # Then check other features
+          for feature in afc amfi core_device_proxy debug_proxy dvt installation_proxy springboardservices misagent mobile_image_mounter location_simulation pair tss tunneld usbmuxd; do
+            echo "Checking feature: $feature"
+            cargo check --no-default-features --features "$feature"
           done 
