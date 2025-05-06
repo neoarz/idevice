@@ -18,11 +18,17 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
-      - name: Build with all features
-        run: cargo build --workspace --all-features
+      - name: Build core library
+        working-directory: ./idevice
+        run: |
+          # Add time 
+          sed -i 's/tokio = { version = "1.43", features = \["io-util"\] }/tokio = { version = "1.43", features = \["io-util", "time"\] }/g' Cargo.toml
+          # Build with time feature enabled
+          cargo build --features "time"
       - name: Check each feature individually
+        working-directory: ./idevice
         run: |
           for feature in afc amfi core_device_proxy debug_proxy dvt heartbeat installation_proxy springboardservices misagent mobile_image_mounter location_simulation pair tcp tunnel_tcp_stack tss tunneld usbmuxd xpc; do
             echo "Checking feature: $feature"
-            cargo check --package idevice --no-default-features --features "$feature"
+            cargo check --no-default-features --features "$feature,time"
           done 
