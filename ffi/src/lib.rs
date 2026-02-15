@@ -39,6 +39,8 @@ pub mod provider;
 pub mod rsd;
 #[cfg(feature = "screenshotr")]
 pub mod screenshotr;
+#[cfg(feature = "location_simulation")]
+pub mod simulate_location;
 #[cfg(feature = "springboardservices")]
 pub mod springboardservices;
 #[cfg(feature = "syslog_relay")]
