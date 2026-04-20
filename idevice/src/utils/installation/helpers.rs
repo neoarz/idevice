@@ -11,6 +11,9 @@ use crate::{
     provider::IdeviceProvider,
 };
 
+#[cfg(feature = "rsd")]
+use crate::{RsdService, provider::RsdProvider, rsd};
+
 pub const PUBLIC_STAGING: &str = "PublicStaging";
 
 pub const IPCC_REMOTE_FILE: &str = "idevice.ipcc";
@@ -222,12 +225,71 @@ async fn upload_file_to_public_staging<P: AsRef<[u8]>>(
     })
 }
 
+/// Upload a file to `PublicStaging` over RSD and return its InstallationProxy path
+#[cfg(feature = "rsd")]
+async fn upload_file_to_public_staging_rsd<P: AsRef<[u8]>>(
+    provider: &mut impl RsdProvider,
+    handshake: &mut rsd::RsdHandshake,
+    file: P,
+) -> Result<InstallPackage, IdeviceError> {
+    let mut afc = AfcClient::connect_rsd(provider, handshake).await?;
+
+    ensure_public_staging(&mut afc).await?;
+
+    let file = file.as_ref();
+
+    let package_type = determine_package_type(&file).await?;
+
+    let remote_path = format!("{PUBLIC_STAGING}/{}", package_type.get_remote_file()?);
+
+    afc_upload_file(&mut afc, file, &remote_path).await?;
+
+    let options = match package_type {
+        PackageType::Ipcc => plist!({"PackageType": "CarrierBundle"}),
+        PackageType::Ipa(build_id) => plist!({"CFBundleIdentifier": build_id}),
+        PackageType::Unknown => plist!({}),
+    };
+
+    Ok(InstallPackage {
+        remote_package_path: remote_path,
+        options,
+    })
+}
+
 /// Recursively Upload a directory of file to `PublicStaging`
 async fn upload_dir_to_public_staging<P: AsRef<Path>>(
     provider: &dyn IdeviceProvider,
     file: P,
 ) -> Result<InstallPackage, IdeviceError> {
     let mut afc = AfcClient::connect(provider).await?;
+
+    ensure_public_staging(&mut afc).await?;
+
+    let file = file.as_ref();
+    let remote_folder_name = file
+        .iter()
+        .next_back()
+        .map(|x| x.to_string_lossy().to_string())
+        .unwrap_or(IPA_REMOTE_FILE.to_string());
+
+    let remote_path = format!("{PUBLIC_STAGING}/{remote_folder_name}");
+
+    afc_upload_dir(&mut afc, file, &remote_path).await?;
+
+    Ok(InstallPackage {
+        remote_package_path: remote_path,
+        options: plist!({"PackageType": "Developer"}),
+    })
+}
+
+/// Recursively upload a directory to `PublicStaging` over RSD.
+#[cfg(feature = "rsd")]
+async fn upload_dir_to_public_staging_rsd<P: AsRef<Path>>(
+    provider: &mut impl RsdProvider,
+    handshake: &mut rsd::RsdHandshake,
+    file: P,
+) -> Result<InstallPackage, IdeviceError> {
+    let mut afc = AfcClient::connect_rsd(provider, handshake).await?;
 
     ensure_public_staging(&mut afc).await?;
 
@@ -268,6 +330,28 @@ pub async fn prepare_file_upload(
     })
 }
 
+#[cfg(feature = "rsd")]
+pub async fn prepare_file_upload_rsd(
+    provider: &mut impl RsdProvider,
+    handshake: &mut rsd::RsdHandshake,
+    data: impl AsRef<[u8]>,
+    caller_options: Option<plist::Value>,
+) -> Result<InstallPackage, IdeviceError> {
+    let InstallPackage {
+        remote_package_path,
+        options,
+    } = upload_file_to_public_staging_rsd(provider, handshake, data).await?;
+    let full_options = plist!({
+        :<? caller_options,
+        :< options,
+    });
+
+    Ok(InstallPackage {
+        remote_package_path,
+        options: full_options,
+    })
+}
+
 pub async fn prepare_dir_upload(
     provider: &dyn IdeviceProvider,
     local_path: impl AsRef<Path>,
@@ -277,6 +361,29 @@ pub async fn prepare_dir_upload(
         remote_package_path,
         options,
     } = upload_dir_to_public_staging(provider, &local_path).await?;
+
+    let full_options = plist!({
+        :<? caller_options,
+        :< options,
+    });
+
+    Ok(InstallPackage {
+        remote_package_path,
+        options: full_options,
+    })
+}
+
+#[cfg(feature = "rsd")]
+pub async fn prepare_dir_upload_rsd(
+    provider: &mut impl RsdProvider,
+    handshake: &mut rsd::RsdHandshake,
+    local_path: impl AsRef<Path>,
+    caller_options: Option<plist::Value>,
+) -> Result<InstallPackage, IdeviceError> {
+    let InstallPackage {
+        remote_package_path,
+        options,
+    } = upload_dir_to_public_staging_rsd(provider, handshake, &local_path).await?;
 
     let full_options = plist!({
         :<? caller_options,
