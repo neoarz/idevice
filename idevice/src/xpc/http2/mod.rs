@@ -94,18 +94,16 @@ impl<R: ReadWrite> Http2Client<R> {
             let frame = frame::Frame::next(&mut self.inner).await?;
             // debug!("Got frame: {frame:#?}");
             match frame {
-                frame::Frame::Settings(settings_frame) => {
-                    if settings_frame.flags != 1 {
-                        // ack that
-                        let frame = frame::SettingsFrame {
-                            settings: Vec::new(),
-                            stream_id: settings_frame.stream_id,
-                            flags: 1,
-                        }
-                        .serialize();
-                        self.inner.write_all(&frame).await?;
-                        self.inner.flush().await?;
+                frame::Frame::Settings(settings_frame) if settings_frame.flags != 1 => {
+                    // ack that
+                    let frame = frame::SettingsFrame {
+                        settings: Vec::new(),
+                        stream_id: settings_frame.stream_id,
+                        flags: 1,
                     }
+                    .serialize();
+                    self.inner.write_all(&frame).await?;
+                    self.inner.flush().await?;
                 }
                 frame::Frame::Data(data_frame) => {
                     debug!(
