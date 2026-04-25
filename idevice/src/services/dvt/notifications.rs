@@ -15,12 +15,12 @@ use tracing::warn;
 
 #[derive(Debug)]
 pub struct NotificationInfo {
-    notification_type: String,
-    mach_absolute_time: i64,
-    exec_name: String,
-    app_name: String,
-    pid: u32,
-    state_description: String,
+    pub notification_type: String,
+    pub mach_absolute_time: i64,
+    pub exec_name: String,
+    pub app_name: String,
+    pub pid: u32,
+    pub state_description: String,
 }
 
 #[derive(Debug)]

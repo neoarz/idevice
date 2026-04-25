@@ -38,6 +38,8 @@ dvt = ["idevice/dvt"]
 device_info = ["idevice/device_info"]
 application_listing = ["idevice/application_listing"]
 condition_inducer = ["idevice/condition_inducer"]
+energy_monitor = ["idevice/energy_monitor"]
+graphics = ["idevice/graphics"]
 network_monitor = ["idevice/network_monitor"]
 sysmontap = ["idevice/sysmontap"]
 heartbeat = ["idevice/heartbeat"]
@@ -80,6 +82,8 @@ full = [
   "device_info",
   "application_listing",
   "condition_inducer",
+  "energy_monitor",
+  "graphics",
   "network_monitor",
   "sysmontap",
   "heartbeat",
