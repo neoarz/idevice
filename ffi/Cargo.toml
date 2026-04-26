@@ -16,6 +16,7 @@ libc = "0.2.171"
 plist = "1.7.1"
 plist_ffi = { version = "0.1.6" }
 uuid = { version = "1.12", features = ["v4"], optional = true }
+serde_json = { version = "1", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Networking_WinSock"] }
@@ -66,6 +67,7 @@ tunnel_tcp_stack = ["idevice/tunnel_tcp_stack"]
 tss = ["idevice/tss"]
 tunneld = ["idevice/tunneld"]
 usbmuxd = ["idevice/usbmuxd"]
+wda = ["idevice/wda", "dep:serde_json"]
 xpc = ["idevice/xpc"]
 screenshotr = ["idevice/screenshotr"]
 full = [
@@ -110,6 +112,7 @@ full = [
   "tss",
   "tunneld",
   "usbmuxd",
+  "wda",
   "xpc",
 ]
 default = ["full", "aws-lc"]

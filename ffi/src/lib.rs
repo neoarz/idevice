@@ -72,6 +72,10 @@ pub mod tunnel_provider;
 #[cfg(feature = "usbmuxd")]
 pub mod usbmuxd;
 pub mod util;
+#[cfg(feature = "wda")]
+pub mod wda;
+#[cfg(feature = "wda")]
+pub mod wda_bridge;
 
 pub use errors::*;
 pub use pairing_file::*;
