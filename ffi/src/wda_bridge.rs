@@ -166,7 +166,9 @@ fn endpoints_to_c(e: &WdaBridgeEndpoints) -> WdaBridgeEndpointsC {
     };
     WdaBridgeEndpointsC {
         udid,
-        wda_url: CString::new(e.wda_url.as_str()).unwrap_or_default().into_raw(),
+        wda_url: CString::new(e.wda_url.as_str())
+            .unwrap_or_default()
+            .into_raw(),
         mjpeg_url: CString::new(e.mjpeg_url.as_str())
             .unwrap_or_default()
             .into_raw(),

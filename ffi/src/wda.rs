@@ -629,8 +629,7 @@ pub unsafe extern "C" fn wda_client_click(
 
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res =
-        run_sync_local(async move { client.click(&element_id, session_id.as_deref()).await });
+    let res = run_sync_local(async move { client.click(&element_id, session_id.as_deref()).await });
     void_result(res)
 }
 
@@ -658,8 +657,7 @@ pub unsafe extern "C" fn wda_client_send_keys(
 
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res =
-        run_sync_local(async move { client.send_keys(&text, session_id.as_deref()).await });
+    let res = run_sync_local(async move { client.send_keys(&text, session_id.as_deref()).await });
     void_result(res)
 }
 
@@ -741,7 +739,14 @@ pub unsafe extern "C" fn wda_client_swipe(
     let client = h.build_client();
     let res = run_sync_local(async move {
         client
-            .swipe(start_x, start_y, end_x, end_y, duration, session_id.as_deref())
+            .swipe(
+                start_x,
+                start_y,
+                end_x,
+                end_y,
+                duration,
+                session_id.as_deref(),
+            )
             .await
     });
     void_result(res)
@@ -859,13 +864,7 @@ pub unsafe extern "C" fn wda_client_touch_and_hold(
     let client = h.build_client();
     let res = run_sync_local(async move {
         client
-            .touch_and_hold(
-                duration,
-                x,
-                y,
-                element_id.as_deref(),
-                session_id.as_deref(),
-            )
+            .touch_and_hold(duration, x, y, element_id.as_deref(), session_id.as_deref())
             .await
     });
     void_result(res)
@@ -911,7 +910,11 @@ pub unsafe extern "C" fn wda_client_scroll(
         Ok(o) => o,
         Err(e) => return ffi_err!(e),
     };
-    let to_visible = if has_to_visible { Some(to_visible) } else { None };
+    let to_visible = if has_to_visible {
+        Some(to_visible)
+    } else {
+        None
+    };
 
     let h = unsafe { &*handle };
     let client = h.build_client();
@@ -1039,8 +1042,7 @@ pub unsafe extern "C" fn wda_client_viewport_rect(
     };
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res =
-        run_sync_local(async move { client.viewport_rect(session_id.as_deref()).await });
+    let res = run_sync_local(async move { client.viewport_rect(session_id.as_deref()).await });
     write_json(res, out_json)
 }
 
@@ -1063,8 +1065,7 @@ pub unsafe extern "C" fn wda_client_orientation(
     };
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res =
-        run_sync_local(async move { client.orientation(session_id.as_deref()).await });
+    let res = run_sync_local(async move { client.orientation(session_id.as_deref()).await });
     write_string(res, out_str)
 }
 
@@ -1166,9 +1167,8 @@ pub unsafe extern "C" fn wda_client_activate_app(
     };
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res = run_sync_local(async move {
-        client.activate_app(&bundle_id, session_id.as_deref()).await
-    });
+    let res =
+        run_sync_local(async move { client.activate_app(&bundle_id, session_id.as_deref()).await });
     write_json(res, out_json)
 }
 
@@ -1198,7 +1198,9 @@ pub unsafe extern "C" fn wda_client_terminate_app(
     let h = unsafe { &*handle };
     let client = h.build_client();
     let res = run_sync_local(async move {
-        client.terminate_app(&bundle_id, session_id.as_deref()).await
+        client
+            .terminate_app(&bundle_id, session_id.as_deref())
+            .await
     });
     write_bool(res, out_bool)
 }
@@ -1267,9 +1269,8 @@ pub unsafe extern "C" fn wda_client_background_app(
 
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res = run_sync_local(async move {
-        client.background_app(seconds, session_id.as_deref()).await
-    });
+    let res =
+        run_sync_local(async move { client.background_app(seconds, session_id.as_deref()).await });
     write_json(res, out_json)
 }
 
@@ -1292,8 +1293,7 @@ pub unsafe extern "C" fn wda_client_is_locked(
     };
     let h = unsafe { &*handle };
     let client = h.build_client();
-    let res =
-        run_sync_local(async move { client.is_locked(session_id.as_deref()).await });
+    let res = run_sync_local(async move { client.is_locked(session_id.as_deref()).await });
     write_bool(res, out_bool)
 }
 
@@ -1317,10 +1317,7 @@ fn cstr_to_opt(p: *const c_char) -> Result<Option<String>, IdeviceError> {
     }
 }
 
-fn write_string(
-    res: Result<String, IdeviceError>,
-    out: *mut *mut c_char,
-) -> *mut IdeviceFfiError {
+fn write_string(res: Result<String, IdeviceError>, out: *mut *mut c_char) -> *mut IdeviceFfiError {
     match res {
         Ok(s) => {
             unsafe { *out = CString::new(s).unwrap_or_default().into_raw() };
@@ -1330,10 +1327,7 @@ fn write_string(
     }
 }
 
-fn write_json(
-    res: Result<Value, IdeviceError>,
-    out: *mut *mut c_char,
-) -> *mut IdeviceFfiError {
+fn write_json(res: Result<Value, IdeviceError>, out: *mut *mut c_char) -> *mut IdeviceFfiError {
     match res {
         Ok(v) => match serde_json::to_string(&v) {
             Ok(s) => {
